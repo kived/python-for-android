@@ -21,6 +21,8 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+import android.provider.Settings.Secure;
+import org.renpy.android.PythonActivity;
 
 /**
  * Methods that are expected to be called via JNI, to access the
@@ -32,6 +34,11 @@ public class Hardware {
     // The context.
     static Context context;
     static View view;
+
+	public static String getAndroidID() {
+		String androidID = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
+		return androidID;
+	}
 
     /**
      * Vibrate for s seconds.

@@ -22,7 +22,7 @@ else:
     ANDROID = 'android'
     ANT = 'ant'
 
-# if ANDROIDSDK is on path, use android from this path
+#if ANDROIDSDK is on path, use android from this path
 ANDROIDSDK = os.environ.get('ANDROIDSDK')
 if ANDROIDSDK:
     ANDROID = os.path.join(ANDROIDSDK, 'tools', ANDROID)

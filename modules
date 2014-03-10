@@ -1,0 +1,9 @@
+python 
+kivy pygame twisted 
+zope zope_component zope_event 
+openssl
+pycrypto pyopenssl
+jpeg png 
+sqlalchemy alembic
+cnotify
+eesentinel aeris2

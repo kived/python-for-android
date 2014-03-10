@@ -2,7 +2,6 @@
 
 VERSION_twisted=${VERSION_twisted:-14.0}
 URL_twisted=http://twistedmatrix.com/Releases/Twisted/$VERSION_twisted/Twisted-$VERSION_twisted.0.tar.bz2
-
 DEPS_twisted=(zope)
 MD5_twisted=9625c094e0a18da77faa4627b98c9815
 BUILD_twisted=$BUILD_PATH/twisted/$(get_directory $URL_twisted)
