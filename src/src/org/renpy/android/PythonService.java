@@ -10,6 +10,8 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.os.Process;
 
+import org.renpy.android.Hardware;
+
 public class PythonService extends Service  implements Runnable {
 
     // Thread for Python code
@@ -32,6 +34,7 @@ public class PythonService extends Service  implements Runnable {
     @Override
     public void onCreate() {
         super.onCreate();
+        Hardware.context = this;
     }
 
     @Override

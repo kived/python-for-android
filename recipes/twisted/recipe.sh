@@ -1,6 +1,7 @@
 #!/bin/bash
 
-VERSION_twisted=${VERSION_twisted:-11.1}
+#VERSION_twisted=${VERSION_twisted:-11.1}
+VERSION_twisted=${VERSION_twisted:-13.0}
 URL_twisted=http://twistedmatrix.com/Releases/Twisted/$VERSION_twisted/Twisted-$VERSION_twisted.0.tar.bz2
 DEPS_twisted=(zope)
 MD5_twisted=

@@ -6,6 +6,8 @@
 #
 #------------------------------------------------------------------------------
 
+MODULES=$(cat `dirname $0`/modules)
+
 # Modules
 MODULES=
 
@@ -788,6 +790,11 @@ function run_biglink() {
 	pop_arm
 }
 
+function run_links() {
+	ln -s private.mp3 "$DIST_PATH"/assets/private.mp3.tgz
+	ln -s public.mp3 "$DIST_PATH"/assets/public.mp3.tgz
+}
+
 function run() {
 	check_build_deps
 	run_prepare
@@ -799,6 +806,7 @@ function run() {
 	run_postbuild
 	run_pymodules_install
 	run_distribute
+	#run_links
 	info "All done !"
 }
 

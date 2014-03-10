@@ -1,5 +1,7 @@
 #!/bin/bash
 
+P4A_kivy_DIR=`dirname $0`/../../../aeris2-android/src/kivy/
+
 VERSION_kivy=${VERSION_kivy:-stable}
 URL_kivy=https://github.com/kivy/kivy/zipball/$VERSION_kivy/kivy-$VERSION_kivy.zip
 DEPS_kivy=(pygame pyjnius android)
@@ -13,7 +15,8 @@ function prebuild_kivy() {
 
 function shouldbuild_kivy() {
 	if [ -d "$SITEPACKAGES_PATH/kivy" ]; then
-		DO_BUILD=0
+		#DO_BUILD=0
+		rm -rf "$SITEPACKAGES_PATH/kivy"
 	fi
 }
 
