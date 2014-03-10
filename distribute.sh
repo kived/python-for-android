@@ -8,9 +8,6 @@
 
 MODULES=$(cat `dirname $0`/modules)
 
-# Modules
-MODULES=
-
 # Resolve Python path
 PYTHON="$(which python2.7)"
 if [ "X$PYTHON" == "X" ]; then
@@ -806,7 +803,7 @@ function run() {
 	run_postbuild
 	run_pymodules_install
 	run_distribute
-	#run_links
+	run_links
 	info "All done !"
 }
 
