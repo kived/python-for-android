@@ -28,7 +28,7 @@ function build_sqlalchemy() {
 
 	rm -rf $BUILD_sqlalchemy/build/
 
-	sed -i 's/\(setup(name="SQLAlchemy",\)/\1 zip_safe=False,/' setup.py
+	sed -i 's/\(setup(name="SQLAlchemy",[[:space:]]*$\)/\1 zip_safe=False,/' setup.py
 
     $HOSTPYTHON setup.py build_ext
     try $HOSTPYTHON setup.py build_ext -v
