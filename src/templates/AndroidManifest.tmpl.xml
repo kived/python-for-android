@@ -19,7 +19,8 @@
   <application android:label="@string/appName"
                android:icon="@drawable/icon"
 			   android:hardwareAccelerated="true"
-               >
+               {% for ao in args.app_options %}android:{{ ao[0] }}="{{ ao[1] }}"
+               {% endfor %}>
 
 	{% for m in args.meta_data %}
 	<meta-data android:name="{{ m.split('=', 1)[0] }}" android:value="{{ m.split('=', 1)[-1] }}"/>{% endfor %}
