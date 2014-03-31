@@ -394,6 +394,7 @@ tools directory of the Android SDK.
             help='Indicate if the application needs the device to stay on')
     ap.add_argument('command', nargs='*', help='The command to pass to ant (debug, release, installd, installr)')
     ap.add_argument('--add-jar', dest='add_jar', action='append', help='Add a Java .jar to the libs, so you can access its classes with pyjnius. You can specify this argument more than once to include multiple jars')
+    ap.add_argument('--application-option', dest='app_options', action='append', help='Custom key=value to add to Application entry')
     ap.add_argument('--meta-data', dest='meta_data', action='append',
             help='Custom key=value to add in application metadata')
 
@@ -410,6 +411,11 @@ tools directory of the Android SDK.
 
     if args.meta_data is None:
         args.meta_data = []
+    
+    if args.app_options is None:
+        args.app_options = []
+    else:
+        args.app_options = [ao.split('=') for ao in args.app_options[:]]
 
     if args.compile_pyo:
         if PYTHON is None:
