@@ -19,6 +19,8 @@ function shouldbuild_sqlalchemy() {
 
 function build_sqlalchemy() {
 	cd $BUILD_sqlalchemy
+	
+	#cp $RECIPE_sqlalchemy/threadlocal.py $BUILD_sqlalchemy/lib/sqlalchemy/engine/threadlocal.py
 
 	push_arm
 	export LDFLAGS="$LDFLAGS -L$LIBS_PATH"

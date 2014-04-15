@@ -1,6 +1,9 @@
 package org.renpy.android;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
@@ -149,6 +152,20 @@ public class PythonActivity extends Activity implements Runnable {
         if ( this.mInfo.metaData.containsKey("android.background_color") ) {
             getWindow().getDecorView().setBackgroundColor(
                 this.mInfo.metaData.getInt("android.background_color"));
+        }
+
+        if ( this.mInfo.metaData.containsKey("kivy.persistent") ) {
+            Notification.Builder builder = new Notification.Builder(getApplicationContext());
+            builder.setContentTitle(this.getTitle());
+            builder.setContentText(this.mInfo.metaData.getString("kivy.persistent_text", "Application is running"));
+            builder.setSmallIcon(getApplicationContext().getApplicationInfo().icon);
+            builder.setOngoing(true);
+            Intent intent = new Intent(this, PythonActivity.class);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 01, intent, Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            builder.setContentIntent(pendingIntent);
+            Notification notification = builder.getNotification();
+            NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.notify(02, notification);
         }
     }
 
