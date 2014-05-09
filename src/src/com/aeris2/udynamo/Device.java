@@ -1,133 +1,98 @@
 
 package com.aeris2.udynamo;
 
-import java.util.Random;
+import java.util.HashMap;
 
-import com.magtek.mobile.android.scra.ConfigParam;
+import org.renpy.android.PythonActivity;
+
 import com.magtek.mobile.android.scra.MagTekSCRA;
-import com.magtek.mobile.android.scra.MTSCRAException;
-import com.magtek.mobile.android.scra.ProcessMessageResponse;
-import com.magtek.mobile.android.scra.SCRAConfiguration;
-import com.magtek.mobile.android.scra.SCRAConfigurationDeviceInfo;
-import com.magtek.mobile.android.scra.SCRAConfigurationReaderType;
-import com.magtek.mobile.android.scra.StatusCode;
 
-//import android.os.Bundle;
-//import android.content.Context;
-//import android.media.AudioManager;
+import android.media.AudioManager;
+import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Handler.Callback;
-//import android.app.Activity;
-import android.os.Looper;
+
 import android.util.Log;
 
 class Device {
 
-    class LooperThread extends Thread {
-
-        public void run() {
-            Looper.prepare();
-            mSCRADataHandler = new Handler(new SCRAHandlerCallback());
-            mMTSCRA = new MagTekSCRA(mSCRADataHandler);
-            //mAudioMgr = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-            //mIntCurrentVolume = mAudioMgr.getStreamVolume(AudioManager.STREAM_MUSIC);
-            InitializeData();
-            Looper.loop();
-        }
-    }
-
     private MagTekSCRA mMTSCRA;
-    //private Handler mSCRADataHandler = new Handler(new SCRAHandlerCallback());
-    //private Handler mSCRADataHandler = new Handler(Looper.getMainLooper());
     private Handler mSCRADataHandler;
 
-    private Message message;
+    private HashMap data;
 
     private int mIntCurrentDeviceStatus;
     private int mIntCurrentStatus;
     private int mIntCurrentVolume;
     private String mStringDebugData;
 
-    //private AudioManager mAudioMgr;
+    private AudioManager mAudioMgr;
 
     public static final int STATUS_IDLE = 1;
 
-    public static final String CONFIGWS_URL = "https://deviceconfig.magensa.net/service.asmx";//Production URL
-    private static final int CONFIGWS_READERTYPE = 1;
-    private static final String CONFIGWS_USERNAME = "magtek";
-    private static final String CONFIGWS_PASSWORD = "p@ssword";
-    String mStringLocalConfig;
+    private final Object lock = new Object();
 
     private void InitializeData()
     {
         mMTSCRA.clearBuffers();
         //mLongTimerInterval = 0;
-//		miReadCount=0;
+        //miReadCount=0;
         //mbAudioConnected=false;
         mIntCurrentVolume=0;
         mIntCurrentStatus = STATUS_IDLE;
         mIntCurrentDeviceStatus = MagTekSCRA.DEVICE_STATE_DISCONNECTED;
-
         //mStringDebugData ="";
         //mStringAudioConfigResult="";
 
     }
+
+    public boolean hasData() {
+        if (data == null) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public void setData(HashMap local_data) {
+        synchronized (lock) {
+            data = local_data;
+        }
+    }
+    public HashMap getData() {
+        synchronized (lock) {
+            HashMap temp = data;
+            data = null;
+            return temp;
+        }
+    }
+
     private void debugMsg(String lpstrMessage)
     {
         Log.i("udynamo:",lpstrMessage);
 
     }
 
-//    @Override
-//    public void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        mSCRADataHandler = new Handler(Looper.getMainLooper());
-//        mMTSCRA = new MagTekSCRA(mSCRADataHandler);
-//    }
-
     public Device() {
-        new LooperThread().start();
-    }
 
-    public void setConfig() {
-        try {
-            Random randomGenerator = new Random();
-            int ranint = randomGenerator.nextInt(5);
-            if (ranint == 0) {
-                debugMsg("INPUT_SAMPLE_RATE_IN_HZ=48000,");
-                mMTSCRA.setConfigurationParams("INPUT_SAMPLE_RATE_IN_HZ=48000,");
-            } else if (ranint == 1) {
-                debugMsg("INPUT_SAMPLE_RATE_IN_HZ=32000,");
-                mMTSCRA.setConfigurationParams("INPUT_SAMPLE_RATE_IN_HZ=32000,");
-            } else if (ranint == 2) {
-                debugMsg("INPUT_SAMPLE_RATE_IN_HZ=44100,");
-                mMTSCRA.setConfigurationParams("INPUT_SAMPLE_RATE_IN_HZ=44100,");
-            } else if (ranint == 3) {
-                debugMsg("INPUT_AUDIO_SOURCE=VRECOG,");
-                mMTSCRA.setConfigurationParams("INPUT_AUDIO_SOURCE=VRECOG,");
-            } else if (ranint == 4) {
-                debugMsg("-- Droidx");
-                mMTSCRA.setConfigurationParams("INPUT_SAMPLE_RATE_IN_HZ = 32000,LOWER_SYNC_SAMPLE_LIMIT = 18,LOWER_3BIT_LIMIT = 2,UPPER_3BIT_LIMIT = 15,SAMPLES_PER_BIT = 4,HALF_BIT_LIMIT = 2,");
-            } else if (ranint == 5) {
-                debugMsg("INPUT_WAVE_FORM=0,");
-                mMTSCRA.setConfigurationParams("INPUT_WAVE_FORM=0,");
-            } else {
-                debugMsg("No Change");
+        PythonActivity.mActivity.runOnUiThread(new Runnable () {
+            public void run() {
+                mSCRADataHandler = new Handler(new SCRAHandlerCallback());
+                mMTSCRA = new MagTekSCRA(mSCRADataHandler);
+                Context context = PythonActivity.mActivity;
+                InitializeData();
+                mAudioMgr = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+                mIntCurrentVolume = mAudioMgr.getStreamVolume(AudioManager.STREAM_MUSIC);
+                debugMsg("Created Objects");
+                debugMsg("Current Volume: " + mIntCurrentDeviceStatus);
             }
-        } catch(MTSCRAException ex) {
-            debugMsg("Exception:" + ex.getMessage());
-        }
+        });
     }
 
     public void openDevice() {
         if (mMTSCRA != null) {
-            setConfig();
-//            try {
-//                setupAudioParameters();
-//            } catch(MTSCRAException ex) {
-//                debugMsg("setup audio Exception:" + ex.getMessage());
-//            }
+            data = null;
             mMTSCRA.openDevice();
         } else {
             debugMsg("mMTSCRA is null, can't open");
@@ -142,181 +107,34 @@ class Device {
         }
     }
 
-    public String testDevice() {
-
-        String test_data;
-        test_data = "";
-
-        if (mMTSCRA != null) {
-            test_data = mMTSCRA.toString();
-            test_data += "     ";
-            test_data += mMTSCRA.getMagTekDeviceSerial();
-        }
-
-        if (message != null) {
-            test_data += "     ";
-            test_data += message.toString();
-        } else {
-            test_data += "no message";
-        }
-        return test_data;
-    }
-
-//    private void maxVolume()
-//    {
-//        mAudioMgr.setStreamVolume(AudioManager.STREAM_MUSIC,mAudioMgr.getStreamMaxVolume(AudioManager.STREAM_MUSIC),AudioManager.FLAG_SHOW_UI);
-//    }
+//    public String testDevice() {
 //
-//    private void minVolume()
-//    {
-//        mAudioMgr.setStreamVolume(AudioManager.STREAM_MUSIC,mIntCurrentVolume, AudioManager.FLAG_SHOW_UI);
+//        String test_data;
+//        test_data = "";
+//
+//        if (mMTSCRA != null) {
+//            test_data = mMTSCRA.toString();
+//            test_data += "     ";
+//            test_data += mMTSCRA.getMagTekDeviceSerial();
+//        }
+//
+//        if (message != null) {
+//            test_data += "     ";
+//            test_data += message.toString();
+//        } else {
+//            test_data += "no message";
+//        }
+//        return test_data;
 //    }
 
-    void dumpWebConfigResponse(ProcessMessageResponse lpMessageResponse)
+    private void maxVolume()
     {
-        String strDisplay="";
-        try
-        {
-
-            if(lpMessageResponse!=null)
-            {
-                if(lpMessageResponse.Payload!=null)
-                {
-                    if(lpMessageResponse.Payload.StatusCode!= null)
-                    {
-                        if(lpMessageResponse.Payload.StatusCode.Number==0)
-                        {
-                            if(lpMessageResponse.Payload.SCRAConfigurations.size() > 0)
-                            {
-                                for (int i=0; i < lpMessageResponse.Payload.SCRAConfigurations.size();i++)
-                                {
-                                    SCRAConfiguration tConfig = (SCRAConfiguration) lpMessageResponse.Payload.SCRAConfigurations.elementAt(i);
-                                    strDisplay="********* Config:" + Integer.toString(i+1) + "***********\n";
-
-                                    strDisplay+="DeviceInfo:Model:" + tConfig.DeviceInfo.getProperty(SCRAConfigurationDeviceInfo.PROP_MODEL) + "\n";
-                                    strDisplay+="DeviceInfo:Device:" + tConfig.DeviceInfo.getProperty(SCRAConfigurationDeviceInfo.PROP_DEVICE) + "\n";
-                                    strDisplay+="DeviceInfo:Firmware:" + tConfig.DeviceInfo.getProperty(SCRAConfigurationDeviceInfo.PROP_FIRMWARE) + "\n";
-                                    strDisplay+="DeviceInfo.Platform:" + tConfig.DeviceInfo.getProperty(SCRAConfigurationDeviceInfo.PROP_PLATFORM) + "\n";
-                                    strDisplay+="DeviceInfo:Product:" + tConfig.DeviceInfo.getProperty(SCRAConfigurationDeviceInfo.PROP_PRODUCT) + "\n";
-                                    strDisplay+="DeviceInfo:Release:" + tConfig.DeviceInfo.getProperty(SCRAConfigurationDeviceInfo.PROP_RELEASE) + "\n";
-                                    strDisplay+="DeviceInfo:SDK:" + tConfig.DeviceInfo.getProperty(SCRAConfigurationDeviceInfo.PROP_SDK) + "\n";
-                                    strDisplay+="DeviceInfo:Status:" + tConfig.DeviceInfo.getProperty(SCRAConfigurationDeviceInfo.PROP_STATUS)+ "\n";
-                                    //Status = 0 Unknown
-                                    //Status = 1 Tested and Passed
-                                    //Status = 2 Tested and Failed
-                                    strDisplay+="ReaderType.Name:" + tConfig.ReaderType.getProperty(SCRAConfigurationReaderType.PROP_NAME) + "\n";
-                                    strDisplay+="ReaderType.Type:" + tConfig.ReaderType.getProperty(SCRAConfigurationReaderType.PROP_TYPE) + "\n";
-                                    strDisplay+="ReaderType.Version:" + tConfig.ReaderType.getProperty(SCRAConfigurationReaderType.PROP_VERSION) + "\n";
-                                    strDisplay+="ReaderType.SDK:" + tConfig.ReaderType.getProperty(SCRAConfigurationReaderType.PROP_SDK) + "\n";
-                                    strDisplay+="StatusCode.Description:" + tConfig.StatusCode.Description + "\n";
-                                    strDisplay+="StatusCode.Number:" + tConfig.StatusCode.Number + "\n";
-                                    strDisplay+="StatusCode.Version:" + tConfig.StatusCode.Version + "\n";
-                                    for (int j=0; j < tConfig.ConfigParams.size();j++)
-                                    {
-                                        strDisplay+="ConfigParam.Name:" + ((ConfigParam)tConfig.ConfigParams.elementAt(j)).Name + "\n";
-                                        strDisplay+="ConfigParam.Type:" + ((ConfigParam)tConfig.ConfigParams.elementAt(j)).Type + "\n";
-                                        strDisplay+="ConfigParam.Value:" + ((ConfigParam)tConfig.ConfigParams.elementAt(j)).Value + "\n";
-                                    }//for (int j=0; j < tConfig.ConfigParams.size();j++)
-                                    strDisplay+="*********  Config:" + Integer.toString(i+1) + "***********\n";
-                                    debugMsg(strDisplay);
-                                }//for (int i=0; i < lpMessageResponse.Payload.SCRAConfigurations.size();i++)
-                                //debugMsg(strDisplay);
-                            }//if(lpMessageResponse.Payload.SCRAConfigurations.size() > 0)
-
-                        }//if(lpMessageResponse.Payload.StatusCode.Number==0)
-                        strDisplay= "Payload.StatusCode.Version:" + lpMessageResponse.Payload.StatusCode.getProperty(StatusCode.PROP_VERSION) + "\n";
-                        strDisplay+="Payload.StatusCode.Number:" + lpMessageResponse.Payload.StatusCode.getProperty(StatusCode.PROP_NUMBER) + "\n";
-                        strDisplay+="Payload.StatusCode.Description:" + lpMessageResponse.Payload.StatusCode.getProperty(StatusCode.PROP_DESCRIPTION) + "\n";
-                        debugMsg(strDisplay);
-                    }//if(lpMessageResponse.Payload.StatusCode!= null)
-
-                }//if(lpMessageResponse.Payload!=null)
-            }//if(lpMessageResponse!=null)
-            else
-            {
-                debugMsg("Configuration Not Found");
-            }
-
-        }
-        catch(Exception ex)
-        {
-            debugMsg("Exception:" + ex.getMessage());
-        }
-
+        mAudioMgr.setStreamVolume(AudioManager.STREAM_MUSIC,mAudioMgr.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
     }
 
-    String setupAudioParameters()throws MTSCRAException
+    private void minVolume()
     {
-        mStringLocalConfig="";
-        String strResult="OK";
-
-        try
-        {
-
-            debugMsg("Setting up Audio");
-
-            //Option 3
-
-            String strXMLConfig="";
-//            if (!mGetConfigFromWeb.isChecked())
-//            {
-//                strXMLConfig = getConfigurationLocal();//retrieve saved configuration. This is optional but useful if the web service connection
-//                //is not available or sluggish for some reason. It is important to provide a way to
-//                //sync the local configuration to server configuration to keep the local phone config updated
-//            }
-
-
-            if (strXMLConfig.length() <= 0)
-            {
-                debugMsg("Retrieve Configuration From Web....");
-                //setStatusMessage("Retrieve Configuration From Web");
-                SCRAConfigurationDeviceInfo pDeviceInfo = new SCRAConfigurationDeviceInfo();
-                pDeviceInfo.setProperty(SCRAConfigurationDeviceInfo.PROP_PLATFORM,"Android");
-                pDeviceInfo.setProperty(SCRAConfigurationDeviceInfo.PROP_MODEL,android.os.Build.MODEL.toUpperCase());
-                //pDeviceInfo.setProperty(SCRAConfigurationDeviceInfo.PROP_MODEL,"SPH-L720");
-                strXMLConfig = mMTSCRA.getConfigurationXML(CONFIGWS_USERNAME,CONFIGWS_PASSWORD,CONFIGWS_READERTYPE,pDeviceInfo,CONFIGWS_URL,10000);//Call Web Service to retrieve XML
-                if (strXMLConfig.length() > 0)
-                {
-                    debugMsg("Configuration Received From Server\n******************************\n" + strXMLConfig + "\n******************************\n");
-                    ProcessMessageResponse pResponse = mMTSCRA.getConfigurationResponse(strXMLConfig);
-                    if(pResponse!=null)
-                    {
-                        dumpWebConfigResponse(pResponse);
-                        debugMsg("Setting Configuration From Response....");
-                        mMTSCRA.setConfigurationResponse(pResponse);
-                    }
-                    mStringLocalConfig=strXMLConfig;
-                    debugMsg("SDK Configuration Was Set Successful.\nPlease Swipe A Card....\n");
-                    return strResult;
-                }//if (strXMLConfig.length() > 0)
-                else
-                {
-                    debugMsg("No Configuration Received, Using Default");
-                    strResult="Error:" + "No Configuration Received, Using Default";
-                    return strResult;
-
-                }
-
-            }
-            else
-            {
-                debugMsg("Setting Configuration Locally From XML....");
-                debugMsg("Configuration Saved Locally\n******************************\n" + strXMLConfig + "\n******************************\n");
-                //dumpWebConfigResponse(strXMLConfig);
-                mMTSCRA.setConfigurationXML(strXMLConfig);//Convert XML to Response Object
-                mStringLocalConfig=strXMLConfig;
-                return strResult;
-            }
-
-        }
-        catch(MTSCRAException ex)
-        {
-            debugMsg("Exception:" + ex.getMessage());
-            strResult = "Error:" +  ex.getMessage();
-            //setStatusMessage("Failed Retrieving Configuration From Server:" + strResult);
-            //throw new MTSCRAException(ex.getMessage());
-        }
-        return strResult;
+        mAudioMgr.setStreamVolume(AudioManager.STREAM_MUSIC,mIntCurrentVolume, 0);
     }
 
     private void displayResponseData()
@@ -397,6 +215,52 @@ class Device {
         if(strResponse!=null)
         {
             strDisplay =  strDisplay + "Response.Raw=" + strResponse + "\n";
+
+            HashMap hm = new HashMap();
+            hm.put("track1_encrypted", mMTSCRA.getTrack1());
+            hm.put("track2_encrypted", mMTSCRA.getTrack2());
+            hm.put("track3_encrypted", mMTSCRA.getTrack3());
+            hm.put("ksn", mMTSCRA.getKSN());
+            hm.put("encyrption_status", mMTSCRA.getEncryptionStatus());
+            hm.put("sdk_version", mMTSCRA.getSDKVersion());
+            hm.put("reader_type", mMTSCRA.getDeviceType());
+            hm.put("track1_masked", mMTSCRA.getTrack1Masked());
+            hm.put("track2_masked", mMTSCRA.getTrack2Masked());
+            hm.put("track3_masked", mMTSCRA.getTrack3Masked());
+            hm.put("magneprint_encrypted", mMTSCRA.getMagnePrint());
+            hm.put("magneprint_status", mMTSCRA.getMagnePrintStatus());
+            hm.put("card_iin", mMTSCRA.getCardIIN());
+            hm.put("card_name", mMTSCRA.getCardName());
+            hm.put("card_last4", mMTSCRA.getCardLast4());
+            hm.put("card_expdate", mMTSCRA.getCardExpDate());
+            hm.put("card_panlength", mMTSCRA.getCardPANLength());
+            hm.put("device_serial", mMTSCRA.getDeviceSerial());
+            hm.put("session_id", mMTSCRA.getSessionID());
+
+            if (mMTSCRA.getDeviceType() == MagTekSCRA.DEVICE_TYPE_AUDIO) {
+                hm.put("card_status", mMTSCRA.getCardStatus());
+                hm.put("firmware_partnumber", mMTSCRA.getFirmware());
+                hm.put("magtek_sn", mMTSCRA.getMagTekDeviceSerial());
+                hm.put("tlv_version", mMTSCRA.getTLVVersion());
+                hm.put("hashcode", mMTSCRA.getHashCode());
+
+                String tstrTkStatus = mMTSCRA.getTrackDecodeStatus();
+                String tstrTk1Status="01";
+                String tstrTk2Status="01";
+                String tstrTk3Status="01";
+
+                if(tstrTkStatus.length() >=6)
+                {
+                    tstrTk1Status=tstrTkStatus.substring(0,2);
+                    tstrTk2Status=tstrTkStatus.substring(2,4);
+                    tstrTk3Status=tstrTkStatus.substring(4,6);
+
+                    hm.put("track1_status", tstrTk1Status);
+                    hm.put("track2_status", tstrTk2Status);
+                    hm.put("track3_status", tstrTk3Status);
+                }
+            }
+            setData(hm);
         }
 
         mStringDebugData = strDisplay;
@@ -420,7 +284,7 @@ class Device {
                                 mIntCurrentStatus = STATUS_IDLE;
                                 mIntCurrentDeviceStatus = MagTekSCRA.DEVICE_STATE_CONNECTED;
                                 debugMsg("Connected");
-                                //maxVolume();
+                                maxVolume();
                                 //setStatus(R.string.title_connected, Color.GREEN);
                                 break;
                             case MagTekSCRA.DEVICE_STATE_CONNECTING:
@@ -432,7 +296,7 @@ class Device {
                                 mIntCurrentDeviceStatus = MagTekSCRA.DEVICE_STATE_DISCONNECTED;
                                 debugMsg("Disconnected");
                                 //setStatus(R.string.title_not_connected, Color.RED);
-                                //minVolume();
+                                minVolume();
                                 break;
                         }
                         break;
@@ -447,7 +311,7 @@ class Device {
                     case MagTekSCRA.DEVICE_MESSAGE_DATA_CHANGE:
                         if (msg.obj != null)
                         {
-                            debugMsg("Transfer ended");
+                            debugMsg("Transfer ended. Getting Data.");
                             //displayInfo();
                             displayResponseData();
                             msg.obj=null;
@@ -464,6 +328,9 @@ class Device {
                         debugMsg("Card Swipe Error... Please Swipe Again.");
                         //mCardDataEditText.setText("Card Swipe Error... Please Swipe Again.\n");
                         return true;
+                    case MagTekSCRA.DEVICE_INACTIVITY_TIMEOUT:
+                        debugMsg("Inactivity Timeout...");
+                        return true;
                     default:
                         if (msg.obj != null)
                         {
@@ -477,10 +344,7 @@ class Device {
             {
 
             }
-
             return false;
-
-
         }
     }
 }
