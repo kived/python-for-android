@@ -58,7 +58,13 @@ class Device {
     public void openDevice() {
         if (readerController != null) {
             data = null;
-            readerController.startReader();
+            if (!readerController.isDevicePresent()) {
+                debugMsg("Device is Not plugged in. Can't turn on");
+            } else if (readerController.getReaderState() != ReaderControllerState.STATE_IDLE) {
+                debugMsg("Device in invalid State. Can't turn on");
+            } else {
+                readerController.startReader();
+            }
         } else {
             debugMsg("readerController is null, can't open");
         }

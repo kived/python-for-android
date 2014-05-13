@@ -93,7 +93,11 @@ class Device {
     public void openDevice() {
         if (mMTSCRA != null) {
             data = null;
-            mMTSCRA.openDevice();
+            if (mAudioMgr.isWiredHeadsetOn()) {
+                mMTSCRA.openDevice();
+            } else {
+                debugMsg("Device is Not plugged in. Can't turn on");
+            }
         } else {
             debugMsg("mMTSCRA is null, can't open");
         }
