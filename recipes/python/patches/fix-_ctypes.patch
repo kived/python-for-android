@@ -1,0 +1,20 @@
+--- Python-2.7.2.orig/Modules/_ctypes/libffi/src/dlmalloc.c	2011-06-11 10:46:26.000000000 -0500
++++ Python-2.7.2/Modules/_ctypes/libffi/src/dlmalloc.c	2014-07-02 15:47:09.484705800 -0500
+@@ -966,7 +966,7 @@
+   p = malloc(n);
+   assert(malloc_usable_size(p) >= 256);
+ */
+-size_t dlmalloc_usable_size(void*);
++size_t dlmalloc_usable_size(const void*);
+ 
+ /*
+   malloc_stats();
+@@ -4384,7 +4384,7 @@
+   internal_malloc_stats(gm);
+ }
+ 
+-size_t dlmalloc_usable_size(void* mem) {
++size_t dlmalloc_usable_size(const void* mem) {
+   if (mem != 0) {
+     mchunkptr p = mem2chunk(mem);
+     if (cinuse(p))

@@ -768,12 +768,12 @@ function run_distribute() {
 	try find . | grep -E '*\.(py|pyc|so\.o|so\.a|so\.libs)$' | xargs rm
 
 	# we are sure that all of theses will be never used on android (well...)
-	try rm -rf ctypes
+	#try rm -rf ctypes
 	try rm -rf lib2to3
 	try rm -rf idlelib
 	try rm -rf config/libpython*.a
 	try rm -rf config/python.o
-	try rm -rf lib-dynload/_ctypes_test.so
+	#try rm -rf lib-dynload/_ctypes_test.so
 	try rm -rf lib-dynload/_testcapi.so
 
 	debug "Strip libraries"

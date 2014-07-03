@@ -4,6 +4,8 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := application
 
+include $(LOCAL_PATH)/../../../../libusb/android/jni/libusb.mk
+
 APP_SUBDIRS := $(patsubst $(LOCAL_PATH)/%, %, $(shell find $(LOCAL_PATH)/src/ -type d))
 
 LOCAL_CFLAGS := $(foreach D, $(APP_SUBDIRS), -I$(LOCAL_PATH)/$(D)) \
@@ -30,9 +32,11 @@ LOCAL_SRC_FILES := $(foreach F, $(APP_SUBDIRS), $(addprefix $(F)/,$(notdir $(wil
 # Uncomment to also add C sources
 LOCAL_SRC_FILES += $(foreach F, $(APP_SUBDIRS), $(addprefix $(F)/,$(notdir $(wildcard $(LOCAL_PATH)/$(F)/*.c))))
 
-LOCAL_SHARED_LIBRARIES := sdl $(COMPILED_LIBRARIES)
+LOCAL_SHARED_LIBRARIES := sdl libusb1.0 $(COMPILED_LIBRARIES) 
 
 LOCAL_STATIC_LIBRARIES := jpeg png
+
+LOCAL_C_INCLUDES += $(LIBUSB_ROOT_ABS)
 
 LOCAL_LDLIBS := -lpython2.7 -lGLESv1_CM -ldl -llog -lz
 
@@ -62,3 +66,4 @@ $(error Detected libraries with too long symbol names. Remove all files under pr
 endif
 
 include $(BUILD_SHARED_LIBRARY)
+
