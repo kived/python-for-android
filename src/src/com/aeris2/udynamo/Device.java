@@ -6,6 +6,7 @@ import java.util.HashMap;
 import org.renpy.android.PythonActivity;
 
 import com.magtek.mobile.android.scra.MagTekSCRA;
+import com.magtek.mobile.android.libDynamag.*;
 
 import android.media.AudioManager;
 import android.content.Context;
@@ -20,6 +21,18 @@ class Device {
     private MagTekSCRA mMTSCRA;
     private Handler mSCRADataHandler;
 
+    private MagTeklibDynamag MagTeklibDynamag;
+    private Handler mReaderDataHandler;
+
+    public static final int STATUS_PROCESSCARD = 2;
+    public static final int DEVICE_MESSAGE_CARDDATA_CHANGE =3;
+    public static final int DEVICE_STATUS_CONNECTED = 4;
+    public static final int DEVICE_STATUS_DISCONNECTED = 5;
+
+    public static final int DEVICE_STATUS_CONNECTED_SUCCESS = 0;
+    public static final int DEVICE_STATUS_CONNECTED_FAIL = 1;
+    public static final int DEVICE_STATUS_CONNECTED_PERMISSION_DENIED = 2;
+
     private HashMap data;
 
     private int mIntCurrentDeviceStatus;
@@ -32,6 +45,10 @@ class Device {
     public static final int STATUS_IDLE = 1;
 
     private final Object lock = new Object();
+
+    private Handler mUIProcessCardHandler;
+    private String mStringProcessCardResult;
+    private String mStringCardDataBuffer;
 
     private void InitializeData()
     {
@@ -74,18 +91,31 @@ class Device {
 
     }
 
-    public Device() {
+    public Device(String driver_type) {
+
+        final String DriverType = driver_type;
 
         PythonActivity.mActivity.runOnUiThread(new Runnable () {
             public void run() {
-                mSCRADataHandler = new Handler(new SCRAHandlerCallback());
-                mMTSCRA = new MagTekSCRA(mSCRADataHandler);
                 Context context = PythonActivity.mActivity;
-                InitializeData();
-                mAudioMgr = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-                mIntCurrentVolume = mAudioMgr.getStreamVolume(AudioManager.STREAM_MUSIC);
-                debugMsg("Created Objects");
-                debugMsg("Current Volume: " + mIntCurrentDeviceStatus);
+                if (DriverType.equals("audio")) {
+                    debugMsg("Starting Audio Driver");
+                    mSCRADataHandler = new Handler(new SCRAHandlerCallback());
+                    mMTSCRA = new MagTekSCRA(mSCRADataHandler);
+                    //InitializeData();
+                    mAudioMgr = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+                    mIntCurrentVolume = mAudioMgr.getStreamVolume(AudioManager.STREAM_MUSIC);
+                    debugMsg("Created Objects");
+                    debugMsg("Current Volume: " + mIntCurrentDeviceStatus);
+                } else if (DriverType.equals("usb")) {
+                    debugMsg("Starting USB Driver");
+                    mUIProcessCardHandler = new Handler();
+                    mReaderDataHandler = new Handler(new MtHandlerCallback());
+                    MagTeklibDynamag = new MagTeklibDynamag(context, mReaderDataHandler);
+                } else {
+                    debugMsg("No Driver Type Set.");
+                }
+
             }
         });
     }
@@ -95,17 +125,21 @@ class Device {
             data = null;
             if (mAudioMgr.isWiredHeadsetOn()) {
                 mMTSCRA.openDevice();
-            } else {
-                debugMsg("Device is Not plugged in. Can't turn on");
             }
+        } else if (MagTeklibDynamag != null) {
+            data = null;
+            debugMsg("Open USB Device");
+            MagTeklibDynamag.openDevice();
         } else {
-            debugMsg("mMTSCRA is null, can't open");
+            debugMsg("Device is Not plugged in. Can't turn on");
         }
     }
 
     public void closeDevice() {
         if (mMTSCRA != null) {
             mMTSCRA.closeDevice();
+        } else if (MagTeklibDynamag != null) {
+            MagTeklibDynamag.closeDevice();
         } else {
             debugMsg("mMTSCRA is null, can't close");
         }
@@ -349,6 +383,229 @@ class Device {
 
             }
             return false;
+        }
+    }
+
+    private void ClearData()
+    {
+        mStringProcessCardResult = "";
+    }
+
+    private void ClearMessageBuffer() {
+        mStringCardDataBuffer = "";
+
+    }
+
+    private String getHexString(byte[] b) {
+        String result = "";
+        for (int i = 0; i < b.length; i++) {
+            result += Integer.toString((b[i] & 0xff ) + 0x100, 16).substring(1).toUpperCase() + " ";
+        }
+
+        return result;
+    }
+
+    private void DisplayCommandResult(byte[] result)
+    {
+        String strDisplay="";
+        strDisplay+="Result.Code: (Hex)\n" + String.format("%2s", Integer.toHexString(result[0])).replace(' ', '0').substring(0, 2).toUpperCase() + "\n\n";
+
+        if (result.length > 1 && result[1] > 0) {
+            strDisplay+="Data.Length: (Hex)\n" + String.format("%2s", Integer.toHexString(result[1])).replace(' ', '0') + "\n\n";
+
+            byte[] data = new byte[result[1]];
+            System.arraycopy(result, 2, data, 0, data.length);
+            strDisplay+="Data: (Hex)\n" + getHexString(data) + "\n\n";
+        }
+
+        debugMsg(strDisplay);
+    }
+
+    private void DisplayCardData()
+    {
+
+        HashMap hm = new HashMap();
+
+        String magneprint = MagTeklibDynamag.getMagnePrint();
+        String magnestatus = MagTeklibDynamag.getMagnePrintStatus();
+
+//        // Fix MagnePrint
+//        if (magneprint.length() >= magnestatus.length()) {
+//            magneprint = magneprint.substring(magnestatus.length(), magneprint.length()-1);
+//        }
+
+        hm.put("track1_encrypted", MagTeklibDynamag.getTrack1());
+        hm.put("track2_encrypted", MagTeklibDynamag.getTrack2());
+        hm.put("track3_encrypted", MagTeklibDynamag.getTrack3());
+        hm.put("ksn", MagTeklibDynamag.getKSN());
+        hm.put("encyrption_status", MagTeklibDynamag.getEncryptionStatus());
+        hm.put("sdk_version", MagTeklibDynamag.getSDKVersion());
+        hm.put("track1_masked", MagTeklibDynamag.getTrack1Masked());
+        hm.put("track2_masked", MagTeklibDynamag.getTrack2Masked());
+        hm.put("track3_masked", MagTeklibDynamag.getTrack3Masked());
+        hm.put("magneprint_encrypted", magneprint);
+        hm.put("magneprint_status", magnestatus);
+        hm.put("device_serial", MagTeklibDynamag.getDeviceSerial());
+        hm.put("session_id", MagTeklibDynamag.getSessionID());
+
+        String tstrTkStatus = MagTeklibDynamag.getTrackDecodeStatus();
+        String tstrTk1Status="01";
+        String tstrTk2Status="01";
+        String tstrTk3Status="01";
+
+        if(tstrTkStatus.length() >=6)
+        {
+            tstrTk1Status=tstrTkStatus.substring(0,2);
+            tstrTk2Status=tstrTkStatus.substring(2,4);
+            tstrTk3Status=tstrTkStatus.substring(4,6);
+
+            hm.put("track1_status", tstrTk1Status);
+            hm.put("track2_status", tstrTk2Status);
+            hm.put("track3_status", tstrTk3Status);
+        }
+        setData(hm);
+
+        String strDisplay="";
+        //strDisplay+="Data.Count:\n" + mIntDataCount + "\n\n";
+        strDisplay+="Track.Decode.Status\n" + tstrTkStatus + "\n\n";
+        strDisplay+="SDK.Version:\n" + hm.get("sdk_version") + "\n\n";
+        strDisplay+="Encrypt.Status:\n" + hm.get("encyrption_status") + "\n\n";
+        strDisplay+="Encrypted.Track1:\n" + hm.get("track1_encrypted") + "\n\n";
+        strDisplay+="Encrypted.Track2:\n" + hm.get("track2_encrypted") + "\n\n";
+        strDisplay+="Encrypted.Track3:\n" + hm.get("track3_encrypted") + "\n\n";
+        strDisplay+="Masked.Track1:\n" + hm.get("track1_masked") + "\n\n";
+        strDisplay+="Masked.Track2:\n" + hm.get("track2_masked") + "\n\n";
+        strDisplay+="Masked.Track3:\n" + hm.get("track3_masked") + "\n\n";
+        strDisplay+="Device.Serial:\n" + hm.get("device_serial") + "\n\n";
+        strDisplay+="Key.Serial (KSN):\n" + hm.get("ksn") + "\n\n";
+        strDisplay+="MagnePrint.Status:\n" + hm.get("magneprint_status") + "\n\n";
+        strDisplay+="MagnePrint.Data:\n" + hm.get("magneprint_encrypted") + "\n\n";
+
+        debugMsg("Got Data:");
+        debugMsg(strDisplay);
+
+    }
+
+    private void ProcessMessage() {
+        String strResult = "OK";
+        try {
+            MagTeklibDynamag.setCardData(mStringCardDataBuffer);
+            ClearMessageBuffer();
+            evCardDataReceived();
+        } catch (Exception ex) {
+            strResult = "Error: " + ex.getMessage();
+        }
+        debugMsg(strResult);
+    }
+
+    private String ProcessCardData() {
+        String strResult = "OK";
+        try {
+			/*if ((MagTeklibDynamag.getTrack2Masked().length() > 0)&& (!MagTeklibDynamag.getTrack2Masked().equalsIgnoreCase(";E?")))
+			{
+				strResult = "OK";
+			}
+			else
+			{
+				strResult = "Error: Card Read Failed, masked track2 starts with ;E? ";
+			}
+			*/
+
+        }
+        catch (Exception ex)
+        {
+            strResult = "Error: " + ex.getMessage();
+        }
+
+        return strResult;
+
+    }
+
+    private void evCardDataReceived() {
+        //SetStatus(R.string.status_processing_card, Color.YELLOW);
+        ClearData();
+        //ClearScreen();
+        Thread tProcessCardData = new Thread() {
+            public void run() {
+                //mIntCurrentStatus = STATUS_PROCESSCARD;
+                mStringProcessCardResult = ProcessCardData();
+                mUIProcessCardHandler.post(mUIUpdateProcessCardResults);
+            }
+        };
+        tProcessCardData.start();
+
+    }
+
+    final Runnable mUIUpdateProcessCardResults = new Runnable() {
+        public void run() {
+            try {
+                if (!mStringProcessCardResult.equalsIgnoreCase("OK"))
+                {
+//                    SetStatus(R.string.status_card_read_failed, Color.RED);
+//                    DisplayMessage("Card Read Error", mStringProcessCardResult);
+//                    ClearCardDataBuffer();
+//                    ClearScreen();
+                    debugMsg("Card Read Error: " + mStringProcessCardResult);
+                    ClearData();
+                }
+                else
+                {
+                    DisplayCardData();
+//                    SetStatus(R.string.status_default, Color.GREEN);
+                }
+            } catch (Exception ex) {
+
+            }
+        }
+    };
+
+    private class MtHandlerCallback implements Callback {
+        public boolean handleMessage(Message msg) {
+
+            boolean ret = false;
+
+            switch (msg.what) {
+                case DEVICE_MESSAGE_CARDDATA_CHANGE:
+//                    mIntDataCount++;
+                    mStringCardDataBuffer = (String)msg.obj;
+                    debugMsg("Card Data Buffer: " + msg.obj);
+                    ProcessMessage();
+                    ret = true;
+                    break;
+
+                case DEVICE_STATUS_CONNECTED:
+                    if (((Number)msg.obj).intValue() == DEVICE_STATUS_CONNECTED_SUCCESS) {
+//                        SetStatus(R.string.status_device_connected, Color.GREEN);
+                        debugMsg("Device Connected");
+                        byte [] response = MagTeklibDynamag.sendCommandWithLength("14");
+                        debugMsg("Get Status Response: ");
+                        DisplayCommandResult(response);
+                    } else if (((Number)msg.obj).intValue() == DEVICE_STATUS_CONNECTED_FAIL){
+//                        SetStatus(R.string.status_device_connected_fail, Color.RED);
+                        debugMsg("Device Connect Failed");
+                    } else if (((Number)msg.obj).intValue() == DEVICE_STATUS_CONNECTED_PERMISSION_DENIED){
+//                        SetStatus(R.string.status_device_connected_permission_denied, Color.RED);
+                        debugMsg("Device Connect Permission Denied");
+                    }
+
+                    break;
+
+                case DEVICE_STATUS_DISCONNECTED:
+//                    SetStatus(R.string.status_device_disconnected, Color.RED);
+//                    mIntDataCount=0;
+                    debugMsg("Device Disconnected");
+                    break;
+
+                default:
+                    debugMsg("Default Message");
+                    ret = false;
+                    break;
+
+            }
+
+
+
+            return ret;
         }
     }
 }
