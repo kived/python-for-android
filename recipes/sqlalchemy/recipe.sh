@@ -1,4 +1,4 @@
-\#!/bin/bash
+#!/bin/bash
 
 VERSION_sqlalchemy=${VERSION_sqlalchemy:-0.8.4}
 URL_sqlalchemy=https://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-${VERSION_sqlalchemy}.tar.gz

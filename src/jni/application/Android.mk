@@ -62,3 +62,4 @@ $(error Detected libraries with too long symbol names. Remove all files under pr
 endif
 
 include $(BUILD_SHARED_LIBRARY)
+

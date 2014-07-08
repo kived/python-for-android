@@ -1,0 +1,15 @@
+Libusb needs to be installed to "/system/lib" before pyusb will work. 
+
+See: https://github.com/libusb/libusb/tree/master/android
+
+* Build libusb for android and then install to android system:
+
+    adb push obj/local/armeabi/libusb1.0.so /sdcard/
+    adb shell
+    su
+    mount -o remount,rw /system
+    cat > /system/lib/libusb1.0.so < /sdcard/libusb1.0.so
+    mount -o remount,ro /system
+
+
+

@@ -7,3 +7,4 @@ jpeg png
 sqlalchemy alembic
 cnotify
 eesentinel aeris2
+pyusb
