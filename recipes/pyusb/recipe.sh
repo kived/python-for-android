@@ -21,7 +21,15 @@ function shouldbuild_pyusb() {
 
 function build_pyusb() {
 	cd $BUILD_pyusb
+    
+    # check marker in our source build
+	if [ -f .patched ]; then
+		# no patch needed
+		return
+	fi
 
+	try patch -p1 < $RECIPE_pyusb/patches/fix-android.patch
+	
 	push_arm
 	export LDFLAGS="$LDFLAGS -L$LIBS_PATH"
 	export LDSHARED="$LIBLINK"
@@ -33,6 +41,8 @@ function build_pyusb() {
 	unset LDSHARED
 
 	pop_arm
+	
+	touch .patched
 }
 
 function postbuild_pyusb() {

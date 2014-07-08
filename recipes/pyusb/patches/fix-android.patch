@@ -1,0 +1,17 @@
+--- pyusb-1.0.0b1.orig/usb/backend/libusb1.py	2013-10-21 12:56:10.000000000 -0500
++++ pyusb-1.0.0b1/usb/backend/libusb1.py	2014-07-08 15:50:06.946510994 -0500
+@@ -265,13 +265,7 @@
+ 
+ def _load_library():
+     if sys.platform != 'cygwin':
+-        candidates = ('usb-1.0', 'libusb-1.0', 'usb')
+-        for candidate in candidates:
+-            if sys.platform == 'win32':
+-                candidate = candidate + '.dll'
+-
+-            libname = ctypes.util.find_library(candidate)
+-            if libname is not None: break
++        libname = '/system/lib/libusb1.0.so'
+     else:
+         # corner cases
+         # cygwin predefines library names with 'cyg' instead of 'lib'
