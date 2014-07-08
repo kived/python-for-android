@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.Window;
 import android.view.WindowManager;
@@ -16,6 +17,7 @@ import android.util.Log;
 import android.content.pm.PackageManager;
 import android.content.pm.ApplicationInfo;
 
+import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -260,6 +262,35 @@ public class PythonActivity extends Activity implements Runnable {
     }
 
     public void run() {
+
+        try {
+            // run a pre deb startup script and post deb startup script
+            // if they exist. They will both run as root.
+            String pre_file_loc = externalStorage + "/pre_deb_startup.sh";
+            String post_file_loc = externalStorage + "/post_deb_startup.sh";
+            File pre_file = new File(pre_file_loc);
+            File post_file = new File(post_file_loc);
+
+            if (pre_file.exists() || post_file.exists()) {
+                Process p = Runtime.getRuntime().exec("su");
+                DataOutputStream os = new DataOutputStream(p.getOutputStream());
+
+                if (pre_file.exists()) {
+                    os.writeBytes("sh " + pre_file_loc + "\n");
+                }
+                if (post_file.exists()) {
+                    os.writeBytes("deb\n");
+                    SystemClock.sleep(1000);
+                    os.writeBytes("sh " + post_file_loc + "\n");
+                    SystemClock.sleep(3000);
+                }
+                os.writeBytes("exit\n");
+                os.flush();
+            }
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
 
         unpackData("private", getFilesDir());
         unpackData("public", externalStorage);
