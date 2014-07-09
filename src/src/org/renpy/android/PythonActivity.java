@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.Window;
 import android.view.WindowManager;
@@ -272,23 +271,37 @@ public class PythonActivity extends Activity implements Runnable {
             File post_file = new File(post_file_loc);
 
             if (pre_file.exists() || post_file.exists()) {
+                Log.i(TAG, "Requesting SU");
                 Process p = Runtime.getRuntime().exec("su");
                 DataOutputStream os = new DataOutputStream(p.getOutputStream());
 
                 if (pre_file.exists()) {
+                    Log.i(TAG, "Running Pre Startup");
                     os.writeBytes("sh " + pre_file_loc + "\n");
+                    os.flush();
                 }
                 if (post_file.exists()) {
+                    Log.i(TAG, "Running DEB");
                     os.writeBytes("deb\n");
-                    SystemClock.sleep(1000);
+                    os.flush();
+                    Log.i(TAG, "Running Post Startup");
                     os.writeBytes("sh " + post_file_loc + "\n");
-                    SystemClock.sleep(3000);
+                    os.flush();
+                    Log.i(TAG, "Finished sleep");
                 }
                 os.writeBytes("exit\n");
                 os.flush();
+                os.close();
+                Log.i(TAG, "Wait For");
+                p.waitFor();
+                Log.i(TAG, "Finished Wait For");
             }
 
         } catch (IOException ex) {
+            ex.printStackTrace();
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
 
