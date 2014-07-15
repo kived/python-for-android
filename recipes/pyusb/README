@@ -9,6 +9,9 @@ See: https://github.com/libusb/libusb/tree/master/android
     su
     mount -o remount,rw /system
     cat > /system/lib/libusb1.0.so < /sdcard/libusb1.0.so
+    chmod 644 /system/lib/libusb1.0.so
+    cat > /system/bin/listdevs < /sdcard/listdevs
+    chmod 0755 /system/bin/listdevs
     mount -o remount,ro /system
 
 
