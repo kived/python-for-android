@@ -8,7 +8,15 @@ BUILD_cdecimal=$BUILD_PATH/cdecimal/$(get_directory $URL_cdecimal)
 RECIPE_cdecimal=$RECIPES_PATH/cdecimal
 
 function prebuild_cdecimal() {
-	true
+	cd $BUILD_cdecimal
+	
+	if [ -f .patched ]; then
+		return
+	fi
+	
+	try patch -p1 < $RECIPE_cdecimal/locale.patch
+	
+	touch .patched
 }
 
 function build_cdecimal() {
@@ -33,7 +41,7 @@ function build_cdecimal() {
 
 	try $BUILD_PATH/python-install/bin/python.host setup.py build_ext -v
 	try $BUILD_PATH/python-install/bin/python.host setup.py install -O2
-
+#cp -r . $RECIPE_cdecimal/built
 	# If you need to remove any files:
 	#try rm -rf $BUILD_PATH/python-install/lib/python*/site-packages/cdecimal/<file names...>
 

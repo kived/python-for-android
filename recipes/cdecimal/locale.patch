@@ -1,0 +1,22 @@
+--- a/io.c	2014-07-31 13:23:22.065754519 -0500
++++ built/io.c	2014-07-31 13:24:16.680376930 -0500
+@@ -792,15 +792,14 @@
+ 	}
+ 	else if (*cp == 'N' || *cp == 'n') {
+ 		/* locale specific conversion */
+-		struct lconv *lc;
+ 		spec->type = *cp++;
+ 		/* separator has already been specified */
+ 		if (*spec->sep) return 0;
+ 		spec->type = (spec->type == 'N') ? 'G' : 'g';
+-		lc = localeconv();
+-		spec->dot = lc->decimal_point;
+-		spec->sep = lc->thousands_sep;
+-		spec->grouping = lc->grouping;
++		/* Android does not have localeconv(); we'll just use C locale values */
++		spec->dot = ".";
++		spec->sep = "";
++		spec->grouping = "";
+ 	}
+ 
+ 	/* check correctness */
