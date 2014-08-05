@@ -7,4 +7,4 @@ jpeg png
 sqlalchemy alembic
 cnotify cdecimal
 eesentinel aeris2
-pyusb
+pyusb pil
