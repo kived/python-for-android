@@ -10,7 +10,10 @@ BUILD_kivy=$BUILD_PATH/kivy/$(get_directory $URL_kivy)
 RECIPE_kivy=$RECIPES_PATH/kivy
 
 function prebuild_kivy() {
-	true
+	if [ -d "$P4A_kivy_DIR" ]; then
+		cd $BUILD_kivy
+		make clean
+	fi
 }
 
 function shouldbuild_kivy() {
