@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION_PyMySQL=0.5
+VERSION_PyMySQL=0.6.2
 URL_PyMySQL=https://pypi.python.org/packages/source/P/PyMySQL/PyMySQL-${VERSION_PyMySQL}.tar.gz
 DEPS_PyMySQL=(setuptools sqlalchemy)
 MD5_PyMySQL=
@@ -18,7 +18,15 @@ function build_PyMySQL() {
 	fi
 
 	cd $BUILD_PyMySQL
+    
+    # check marker in our source build
+	if [ -f .patched ]; then
+		# no patch needed
+		return
+	fi
 
+	try patch -p1 < $RECIPE_PyMySQL/patches/fix_setup.patch
+	
 	push_arm
 	export LDFLAGS="$LDFLAGS -L$LIBS_PATH"
 	export LDSHARED="$LIBLINK"
@@ -34,6 +42,8 @@ function build_PyMySQL() {
 	unset LDSHARED
 
 	pop_arm
+	
+	touch .patched
 }
 
 function postbuild_PyMySQL() {
