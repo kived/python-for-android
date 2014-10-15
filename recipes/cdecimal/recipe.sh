@@ -1,18 +1,23 @@
 #!/bin/bash
 
 VERSION_cdecimal=2.3
-URL_cdecimal=http://www.bytereef.org/software/mpdecimal/releases/cdecimal-${VERSION_cdecimal}.tar.gz
+#URL_cdecimal=http://www.bytereef.org/software/mpdecimal/releases/cdecimal-${VERSION_cdecimal}.tar.gz
+#URL_cdecimal=`dirname $0`/cdecimal-${VERSION_cdecimal}.tar.gz
+URL_cdecimal=
 DEPS_cdecimal=(python)
 MD5_cdecimal=
-BUILD_cdecimal=$BUILD_PATH/cdecimal/$(get_directory $URL_cdecimal)
+BUILD_cdecimal=$BUILD_PATH/cdecimal/cdecimal-${VERSION_cdecimal}
 RECIPE_cdecimal=$RECIPES_PATH/cdecimal
 
 function prebuild_cdecimal() {
-	cd $BUILD_cdecimal
-	
-	if [ -f .patched ]; then
+	if [ -f $BUILD_cdecimal/.patched ]; then
 		return
 	fi
+	
+	cd $BUILD_PATH/cdecimal
+	rm -rf cdecimal*
+	tar xaf $RECIPE_cdecimal/cdecimal-${VERSION_cdecimal}.tar.gz
+	cd $BUILD_cdecimal
 	
 	try patch -p1 < $RECIPE_cdecimal/locale.patch
 	
