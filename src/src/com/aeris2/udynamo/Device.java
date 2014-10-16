@@ -66,6 +66,10 @@ class Device {
 
     public boolean hasData() {
         if (data == null) {
+            // Attempt of open device if it is not open
+            if (!this.deviceConnected()) {
+                this.openDevice();
+            }
             return false;
         } else {
             return true;
@@ -91,22 +95,32 @@ class Device {
 
     }
 
-    public Device(String driver_type) {
+    public Device(String driver_type, String port) {
 
         final String DriverType = driver_type;
+        final String Port = port;
 
         PythonActivity.mActivity.runOnUiThread(new Runnable () {
             public void run() {
                 Context context = PythonActivity.mActivity;
-                if (DriverType.equals("audio")) {
-                    debugMsg("Starting Audio Driver");
+                if (DriverType.equals("audio") || DriverType.equals("bluetooth")) {
+
+                    debugMsg("Starting Audio/Bluetooth Driver");
                     mSCRADataHandler = new Handler(new SCRAHandlerCallback());
                     mMTSCRA = new MagTekSCRA(mSCRADataHandler);
-                    //InitializeData();
-                    mAudioMgr = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-                    mIntCurrentVolume = mAudioMgr.getStreamVolume(AudioManager.STREAM_MUSIC);
+
+                    if (DriverType.equals("audio")) {
+                        mMTSCRA.setDeviceType(MagTekSCRA.DEVICE_TYPE_AUDIO);
+                        //InitializeData();
+                        mAudioMgr = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+                        mIntCurrentVolume = mAudioMgr.getStreamVolume(AudioManager.STREAM_MUSIC);
+                        debugMsg("Current Volume: " + mIntCurrentDeviceStatus);
+                    } else if (DriverType.equals("bluetooth")) {
+                        mMTSCRA.setDeviceType(MagTekSCRA.DEVICE_TYPE_BLUETOOTH);
+                        debugMsg("Starting Bluetooth for device " + Port);
+                        mMTSCRA.setDeviceID(Port);
+                    }
                     debugMsg("Created Objects");
-                    debugMsg("Current Volume: " + mIntCurrentDeviceStatus);
                 } else if (DriverType.equals("usb")) {
                     debugMsg("Starting USB Driver");
                     mUIProcessCardHandler = new Handler();
@@ -120,10 +134,25 @@ class Device {
         });
     }
 
+    public boolean deviceConnected() {
+        if (mMTSCRA != null && mMTSCRA.isDeviceConnected()) {
+            return true;
+        } else if (MagTeklibDynamag != null && MagTeklibDynamag.isDeviceConnected()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public void openDevice() {
         if (mMTSCRA != null) {
             data = null;
-            if (mAudioMgr.isWiredHeadsetOn()) {
+            if (mMTSCRA.getDeviceType() == MagTekSCRA.DEVICE_TYPE_AUDIO) {
+                if (mAudioMgr.isWiredHeadsetOn()) {
+                    mMTSCRA.openDevice();
+                }
+            } else if (mMTSCRA.getDeviceType()==MagTekSCRA.DEVICE_TYPE_BLUETOOTH) {
+                debugMsg("Open Bluetooth Device");
                 mMTSCRA.openDevice();
             }
         } else if (MagTeklibDynamag != null) {
@@ -275,29 +304,29 @@ class Device {
             hm.put("device_serial", mMTSCRA.getDeviceSerial());
             hm.put("session_id", mMTSCRA.getSessionID());
 
-            if (mMTSCRA.getDeviceType() == MagTekSCRA.DEVICE_TYPE_AUDIO) {
-                hm.put("card_status", mMTSCRA.getCardStatus());
-                hm.put("firmware_partnumber", mMTSCRA.getFirmware());
-                hm.put("magtek_sn", mMTSCRA.getMagTekDeviceSerial());
-                hm.put("tlv_version", mMTSCRA.getTLVVersion());
-                hm.put("hashcode", mMTSCRA.getHashCode());
+            //if (mMTSCRA.getDeviceType() == MagTekSCRA.DEVICE_TYPE_AUDIO) {
+            hm.put("card_status", mMTSCRA.getCardStatus());
+            hm.put("firmware_partnumber", mMTSCRA.getFirmware());
+            hm.put("magtek_sn", mMTSCRA.getMagTekDeviceSerial());
+            hm.put("tlv_version", mMTSCRA.getTLVVersion());
+            hm.put("hashcode", mMTSCRA.getHashCode());
 
-                String tstrTkStatus = mMTSCRA.getTrackDecodeStatus();
-                String tstrTk1Status="01";
-                String tstrTk2Status="01";
-                String tstrTk3Status="01";
+            String tstrTkStatus = mMTSCRA.getTrackDecodeStatus();
+            String tstrTk1Status="01";
+            String tstrTk2Status="01";
+            String tstrTk3Status="01";
 
-                if(tstrTkStatus.length() >=6)
-                {
-                    tstrTk1Status=tstrTkStatus.substring(0,2);
-                    tstrTk2Status=tstrTkStatus.substring(2,4);
-                    tstrTk3Status=tstrTkStatus.substring(4,6);
+            if(tstrTkStatus.length() >=6)
+            {
+                tstrTk1Status=tstrTkStatus.substring(0,2);
+                tstrTk2Status=tstrTkStatus.substring(2,4);
+                tstrTk3Status=tstrTkStatus.substring(4,6);
 
-                    hm.put("track1_status", tstrTk1Status);
-                    hm.put("track2_status", tstrTk2Status);
-                    hm.put("track3_status", tstrTk3Status);
-                }
+                hm.put("track1_status", tstrTk1Status);
+                hm.put("track2_status", tstrTk2Status);
+                hm.put("track3_status", tstrTk3Status);
             }
+            //}
             setData(hm);
         }
 
@@ -567,23 +596,23 @@ class Device {
             switch (msg.what) {
                 case DEVICE_MESSAGE_CARDDATA_CHANGE:
 //                    mIntDataCount++;
-                    mStringCardDataBuffer = (String)msg.obj;
+                    mStringCardDataBuffer = (String) msg.obj;
                     debugMsg("Card Data Buffer: " + msg.obj);
                     ProcessMessage();
                     ret = true;
                     break;
 
                 case DEVICE_STATUS_CONNECTED:
-                    if (((Number)msg.obj).intValue() == DEVICE_STATUS_CONNECTED_SUCCESS) {
+                    if (((Number) msg.obj).intValue() == DEVICE_STATUS_CONNECTED_SUCCESS) {
 //                        SetStatus(R.string.status_device_connected, Color.GREEN);
                         debugMsg("Device Connected");
-                        byte [] response = MagTeklibDynamag.sendCommandWithLength("14");
+                        byte[] response = MagTeklibDynamag.sendCommandWithLength("14");
                         debugMsg("Get Status Response: ");
                         DisplayCommandResult(response);
-                    } else if (((Number)msg.obj).intValue() == DEVICE_STATUS_CONNECTED_FAIL){
+                    } else if (((Number) msg.obj).intValue() == DEVICE_STATUS_CONNECTED_FAIL) {
 //                        SetStatus(R.string.status_device_connected_fail, Color.RED);
                         debugMsg("Device Connect Failed");
-                    } else if (((Number)msg.obj).intValue() == DEVICE_STATUS_CONNECTED_PERMISSION_DENIED){
+                    } else if (((Number) msg.obj).intValue() == DEVICE_STATUS_CONNECTED_PERMISSION_DENIED) {
 //                        SetStatus(R.string.status_device_connected_permission_denied, Color.RED);
                         debugMsg("Device Connect Permission Denied");
                     }
@@ -600,10 +629,7 @@ class Device {
                     debugMsg("Default Message");
                     ret = false;
                     break;
-
             }
-
-
 
             return ret;
         }
