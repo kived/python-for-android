@@ -1,5 +1,7 @@
 package org.renpy.android;
 
+import java.util.Set;
+
 import android.content.Context;
 import android.os.Vibrator;
 import android.hardware.Sensor;
@@ -10,6 +12,8 @@ import android.util.DisplayMetrics;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.View;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -286,6 +290,18 @@ public class Hardware {
             }
 
         }, i);
+    }
+
+    public static List<String> getPairedBluetoothDevices()
+    {
+        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+
+        List<String> s = new ArrayList<String>();
+        for(BluetoothDevice bt : pairedDevices)
+            s.add(bt.getName() + ";" + bt.getAddress());
+
+        return s;
     }
 
 }
