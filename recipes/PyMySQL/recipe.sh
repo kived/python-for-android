@@ -26,6 +26,7 @@ function build_PyMySQL() {
 	fi
 
 	try patch -p1 < $RECIPE_PyMySQL/patches/fix_setup.patch
+	try patch -p1 < $RECIPE_PyMySQL/patches/fix_decode_byte.patch
 	
 	push_arm
 	export LDFLAGS="$LDFLAGS -L$LIBS_PATH"
