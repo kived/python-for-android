@@ -1,6 +1,10 @@
 package org.renpy.android;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Set;
+//import java.util.HashMap;
+//import java.util.Iterator;
 
 import android.content.Context;
 import android.os.Vibrator;
@@ -9,11 +13,14 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.DisplayMetrics;
+//import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.View;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+//import android.hardware.usb.UsbDevice;
+//import android.hardware.usb.UsbManager;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -302,6 +309,57 @@ public class Hardware {
             s.add(bt.getName() + ";" + bt.getAddress());
 
         return s;
+    }
+
+//    Calling this on a 1 second timer caused and error in about a minute or two:
+//         JNI ERROR (app bug): local reference table overflow (max=512)
+//    Issue found: https://github.com/kivy/python-for-android/issues/164. Seems to
+//    be related.
+//
+//    public static List getUSBDevices()
+//    {
+//        ArrayList s = new ArrayList();
+//        UsbManager manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+//        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+//        try {
+//            Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
+//            while (deviceIterator.hasNext()) {
+//                UsbDevice device = deviceIterator.next();
+//                HashMap hm = new HashMap();
+//                hm.put("vendor_id", device.getVendorId());
+//                hm.put("product_id", device.getProductId());
+//                hm.put("name", device.getDeviceName());
+//
+////                Log.i("hardware:", device.toString());
+//                s.add(hm);
+//            }
+//            return s;
+//        } catch (NullPointerException ex) {
+//            return s;
+//        }
+//    }
+
+    public static boolean fixUSBPermission(int bus, int address)
+    {
+        try {
+            Process p = Runtime.getRuntime().exec("su");
+            DataOutputStream os = new DataOutputStream(p.getOutputStream());
+
+            os.writeBytes("chmod -R 777 /dev/bus/usb/" + String.format("%03d", bus) + "/"
+                    + String.format("%03d", address));
+            os.flush();
+            os.close();
+            p.waitFor();
+
+            return true;
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return false;
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+            return false;
+        }
     }
 
 }
