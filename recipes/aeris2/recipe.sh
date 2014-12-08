@@ -3,7 +3,7 @@
 VERSION_aeris2=
 #URL_aeris2=https://github.com/kivy/kivy/zipball/stable/kivy-stable.zip
 P4A_aeris2_DIR=`dirname $0`/../../../aeris2-android/src/aeris2/
-DEPS_aeris2=(kivy PyMySQL pytz)
+DEPS_aeris2=(kivy PyMySQL pytz babel)
 MD5_aeris2=
 #BUILD_aeris2=$BUILD_PATH/aeris2/$(get_directory $URL_aeris2)
 BUILD_aeris2=$BUILD_PATH/aeris2/aeris2

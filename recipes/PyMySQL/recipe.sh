@@ -2,7 +2,7 @@
 
 VERSION_PyMySQL=0.6.2
 URL_PyMySQL=https://pypi.python.org/packages/source/P/PyMySQL/PyMySQL-${VERSION_PyMySQL}.tar.gz
-DEPS_PyMySQL=(setuptools sqlalchemy)
+DEPS_PyMySQL=(sqlalchemy)
 MD5_PyMySQL=
 BUILD_PyMySQL=$BUILD_PATH/PyMySQL/$(get_directory $URL_PyMySQL)
 RECIPE_PyMySQL=$RECIPES_PATH/PyMySQL
