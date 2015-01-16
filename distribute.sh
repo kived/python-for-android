@@ -6,10 +6,8 @@
 #
 #------------------------------------------------------------------------------
 
-MODULES=$(cat `dirname $0`/modules)
-
 # Modules
-MODULES=
+MODULES=$(cat `dirname $0`/modules)
 
 # Resolve Python path
 PYTHON="$(which python2.7)"
