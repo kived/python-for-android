@@ -23,6 +23,7 @@ function build_mako() {
 	export LDFLAGS="$LDFLAGS -L$LIBS_PATH"
 	export LDSHARED="$LIBLINK"
 
+	export PYTHONPATH=$SITEPACKAGES_PATH
 	#export PYTHONPATH=$BUILD_hostpython/Lib/site-packages:$BUILD_hostpython/build/lib.linux-x86_64-2.7
 
 	try $BUILD_hostpython/hostpython setup.py install -O2 --root=$BUILD_PATH/python-install --install-lib=lib/python2.7/site-packages

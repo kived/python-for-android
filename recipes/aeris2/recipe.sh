@@ -28,7 +28,7 @@ function build_aeris2() {
 	[ -d "/tmp/build-android-python" ] && rm -rf /tmp/build-android-python
 	mkdir /tmp/build-android-python
 	cp $BUILD_hostpython/build/lib.linux-x86_64-2.7/_io.so /tmp/build-android-python
-	export PYTHONPATH=/tmp/build-android-python
+	export PYTHONPATH=/tmp/build-android-python:$BUILD_kivy
 	
 	# fake try to be able to cythonize generated files
 	$BUILD_PATH/python-install/bin/python.host setup.py build_ext
@@ -43,7 +43,7 @@ function build_aeris2() {
 	try find build/lib.* -name "*.o" -exec $STRIP {} \;
 	try $BUILD_PATH/python-install/bin/python.host setup.py install -O2
 	
-	try rm -rf $BUILD_PATH/python-install/lib/python*/site-packages/aeris2-*.egg
+	#try rm -rf $BUILD_PATH/python-install/lib/python*/site-packages/aeris2-*.egg
 
 	#try rm -rf $BUILD_PATH/python-install/lib/python*/site-packages/kivy/tools
 
