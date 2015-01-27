@@ -1,5 +1,6 @@
 python 
-kivy pygame twisted 
+kivy pygame
+pyasn1 twisted 
 zope zope_component zope_event 
 openssl
 pycrypto pyopenssl
