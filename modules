@@ -1,9 +1,9 @@
 python 
 kivy pygame
-pyasn1 twisted 
 zope zope_component zope_event 
 openssl
 pycrypto pyopenssl
+pyasn1 pyasn1-modules twisted 
 jpeg png 
 sqlalchemy alembic
 cnotify cdecimal
