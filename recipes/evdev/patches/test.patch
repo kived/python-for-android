@@ -1,0 +1,51 @@
+diff -Naur orig/evdev/util.py v0.4.7/evdev/util.py
+--- orig/evdev/util.py	2015-06-12 15:41:35.655133745 -0500
++++ v0.4.7/evdev/util.py	2015-06-12 15:43:21.538525878 -0500
+@@ -14,6 +14,7 @@
+ def get_su_binary():
+     global su
+     if su is not False:
++        print 'su already set:', su
+         return su
+ 
+     su_files = ['/sbin/su', '/system/bin/su', '/system/xbin/su', '/data/local/xbin/su',
+@@ -22,22 +23,29 @@
+     su = None
+ 
+     for fn in su_files:
++        print 'check file', fn, 'exists'
+         if os.path.exists(fn):
++            print 'check file', fn, 'works'
+             try:
+                 cmd = [fn, '-c', 'id']
+                 output = subprocess.check_output(cmd)
+-            except Exception:
+-                pass
++            except Exception as e:
++                print 'exception:', e
+             else:
++                print 'check file', fn, 'gives root'
+                 if 'uid=0' in output:
++                    print 'root found:', fn
+                     su = fn
+                     break
+ 
++    print 'return su:', su
+     return su
+ 
+ 
+ def fix_permissions(nodes):
++    print 'get su'
+     su = get_su_binary()
++    print 'su =', su
+     if su:
+         cmd = 'chmod 666 ' + ' '.join(nodes)
+         print cmd
+@@ -47,6 +55,7 @@
+ def list_devices(input_device_dir='/dev/input'):
+     '''List readable character devices in ``input_device_dir``.'''
+ 
++    print 'list devices!'
+     fns = glob.glob('{}/event*'.format(input_device_dir))
+     fix_permissions(fns)
+     fns = list(filter(is_device, fns))

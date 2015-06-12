@@ -9,3 +9,4 @@ sqlalchemy alembic
 cnotify cdecimal
 eesentinel aeris2
 pyusb pil
+evdev
