@@ -69,3 +69,7 @@ def is_ndk(ndk):
         return recipe.ctx.ndk == ndk
     return is_x
 
+
+def will_biglink(recipe, **kwargs):
+    return not recipe.ctx.copy_libs
+
